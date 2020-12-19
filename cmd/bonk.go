@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"os"
+	"path"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -15,40 +17,39 @@ import (
 	kubelet "k8s.io/kubernetes/cmd/kubelet/app"
 )
 
-// NewRootCmd ...
-func NewRootCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:                   "bonk",
-		Short:                 "🛠",
-		SilenceUsage:          true,
-		SilenceErrors:         true,
-		DisableFlagsInUseLine: true,
-	}
-}
-
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
-	root := NewRootCmd()
+	var cmd *cobra.Command
 
-	root.AddCommand(
-		kubelet.NewKubeletCommand(),
-		kubeadm.NewKubeadmCommand(os.Stdin, os.Stdout, os.Stderr),
-		kubectl.NewDefaultKubectlCommand(),
+	switch path.Base(os.Args[0]) {
+	case "kubelet":
+		cmd = kubelet.NewKubeletCommand()
+	case "kubeadm":
+		cmd = kubeadm.NewKubeadmCommand(os.Stdin, os.Stdout, os.Stderr)
+	case "kubectl":
+		cmd = kubectl.NewDefaultKubectlCommand()
+	case "kube-scheduler":
+		cmd = scheduler.NewSchedulerCommand()
+	case "kube-proxy":
+		cmd = proxy.NewProxyCommand()
+	case "kube-controller-manager":
+		cmd = manager.NewControllerManagerCommand()
+	case "kube-apiserver":
 		// API server fails with this error:
 		//
 		// ../../go/pkg/mod/k8s.io/kubernetes@v1.20.1/cmd/kube-apiserver/app/server.go:477:70: undefined: "k8s.io/kubernetes/pkg/generated/openapi".GetOpenAPIDefinitions
 		//
 		// apiserver.NewAPIServerCommand(),
-		manager.NewControllerManagerCommand(),
-		proxy.NewProxyCommand(),
-		scheduler.NewSchedulerCommand(),
-	)
+	default:
+		fmt.Fprintf(os.Stderr, "%s: command not found\n", os.Args[0])
+		os.Exit(2)
+	}
 
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
-	if err := root.Execute(); err != nil {
+	if err := cmd.Execute(); err != nil {
 		os.Exit(1)
 	}
 }

@@ -13,6 +13,11 @@ readonly MODS=($(
         sed -n 's|.*k8s.io/\(.*\) => ./staging/src/k8s.io/.*|k8s.io/\1|p'
 ))
 
+if [ ${#MODS[@]} -eq 0 ]; then
+    echo no matching version for $VERS
+    exit 1
+fi
+
 for m in "${MODS[@]}" ; do
     echo matching version for $m
     v=$(go mod download -json "${m}@kubernetes-${VERS}" | jq -r .Version)

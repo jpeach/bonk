@@ -5,7 +5,6 @@ go 1.15
 require (
 	github.com/spf13/cobra v1.1.1
 	k8s.io/component-base v0.20.1
-	k8s.io/kubectl v0.0.0
 	k8s.io/kubernetes v1.20.1
 )
 

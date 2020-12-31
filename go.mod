@@ -5,6 +5,7 @@ go 1.15
 require (
 	github.com/spf13/cobra v1.1.1
 	k8s.io/component-base v0.20.1
+	k8s.io/kubectl v1.20.1
 	k8s.io/kubernetes v1.20.1
 )
 
@@ -36,3 +37,6 @@ replace (
 	k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.20.1
 	k8s.io/sample-controller => k8s.io/sample-controller v0.20.1
 )
+
+// See makefile comments that describe this sketchiness.
+replace k8s.io/kubernetes => ./deps/kubernetes@v1.20.1

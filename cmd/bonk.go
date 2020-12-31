@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/component-base/logs"
 	kubectl "k8s.io/kubectl/pkg/cmd"
+	apiserver "k8s.io/kubernetes/cmd/kube-apiserver/app"
 	manager "k8s.io/kubernetes/cmd/kube-controller-manager/app"
 	proxy "k8s.io/kubernetes/cmd/kube-proxy/app"
 	scheduler "k8s.io/kubernetes/cmd/kube-scheduler/app"
@@ -36,11 +37,7 @@ func main() {
 	case "kube-controller-manager":
 		cmd = manager.NewControllerManagerCommand()
 	case "kube-apiserver":
-		// API server fails with this error:
-		//
-		// ../../go/pkg/mod/k8s.io/kubernetes@v1.20.1/cmd/kube-apiserver/app/server.go:477:70: undefined: "k8s.io/kubernetes/pkg/generated/openapi".GetOpenAPIDefinitions
-		//
-		// apiserver.NewAPIServerCommand(),
+		cmd = apiserver.NewAPIServerCommand()
 	default:
 		fmt.Fprintf(os.Stderr, "%s: command not found\n", os.Args[0])
 		os.Exit(2)

@@ -1,11 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 	"os"
 	"path"
 	"time"
+
+	"github.com/jpeach/bonk/pkg/cli"
 
 	"github.com/spf13/cobra"
 	"k8s.io/component-base/logs"
@@ -18,35 +19,39 @@ import (
 	kubelet "k8s.io/kubernetes/cmd/kubelet/app"
 )
 
+// Progname ...
+const Progname = "bonk"
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
-
-	var cmd *cobra.Command
-
-	switch path.Base(os.Args[0]) {
-	case "kubelet":
-		cmd = kubelet.NewKubeletCommand()
-	case "kubeadm":
-		cmd = kubeadm.NewKubeadmCommand(os.Stdin, os.Stdout, os.Stderr)
-	case "kubectl":
-		cmd = kubectl.NewDefaultKubectlCommand()
-	case "kube-scheduler":
-		cmd = scheduler.NewSchedulerCommand()
-	case "kube-proxy":
-		cmd = proxy.NewProxyCommand()
-	case "kube-controller-manager":
-		cmd = manager.NewControllerManagerCommand()
-	case "kube-apiserver":
-		cmd = apiserver.NewAPIServerCommand()
-	default:
-		fmt.Fprintf(os.Stderr, "%s: command not found\n", os.Args[0])
-		os.Exit(2)
-	}
 
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
-	if err := cmd.Execute(); err != nil {
-		os.Exit(1)
+	components := map[string]*cobra.Command{
+		"kubelet":                 kubelet.NewKubeletCommand(),
+		"kubeadm":                 kubeadm.NewKubeadmCommand(os.Stdin, os.Stdout, os.Stderr),
+		"kubectl":                 kubectl.NewDefaultKubectlCommand(),
+		"kube-scheduler":          scheduler.NewSchedulerCommand(),
+		"kube-proxy":              proxy.NewProxyCommand(),
+		"kube-controller-manager": manager.NewControllerManagerCommand(),
+		"kube-apiserver":          apiserver.NewAPIServerCommand(),
 	}
+
+	// Check if arg0 is a component name. In that case, we are being
+	// invoked from a link, so just exec that component.
+	if cmd, ok := components[path.Base(os.Args[0])]; ok {
+		cli.Execute(Progname, cmd.Execute)
+	}
+
+	root := &cobra.Command{
+		Use:   "bonk",
+		Short: "bonk is a Kubernetes",
+	}
+
+	for _, c := range components {
+		root.AddCommand(c)
+	}
+
+	cli.Execute(Progname, root.Execute)
 }

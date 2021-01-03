@@ -1,5 +1,14 @@
 VERS := v1.20.1
 
+export GO111MODULE=on
+
+# Fedora uses cgroupsv2 by default, so podman rather than docker.
+ifeq ($(shell uname -s), Linux)
+DOCKER := podman
+else
+DOCKER := docker
+endif
+
 .PHONY: bin/bonk
 bin/bonk: deps/kubernetes@$(VERS)
 	@mkdir -p bin
@@ -19,3 +28,13 @@ deps/kubernetes@$(VERS):
 clean:
 	rm -rf bin
 	rm -rf deps
+
+.PHONY: lint
+lint:
+	$(DOCKER) run \
+		--rm \
+		--volume $$(pwd):/app \
+		--workdir /app \
+		--env GO111MODULE \
+		golangci/golangci-lint:v1.34.1 \
+		golangci-lint run -v --exclude-use-default=false

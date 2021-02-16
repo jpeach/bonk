@@ -1,6 +1,9 @@
 # bonk
 bonk
 
+## Notes
+* u-boot does this by [AST rewriting](https://github.com/u-root/gobusybox#command-transformation)
+
 ## See also
 
 * [#1180 - Add building without in tree providers](https://github.com/kubernetes/enhancements/pull/1180)
